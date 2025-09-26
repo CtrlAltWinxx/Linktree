@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Best Hacking League</title>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="bhl.jpg" type="image/jpeg">
+  <link rel="shortcut icon" href="bhl.jpg" type="image/jpeg">
+
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --card:#0f1113;
+      --muted:#bfc6cc;
+      --accent:#00c2d8; /* turkusowy */
+      --glass: rgba(255,255,255,0.04);
+      --shadow: 0 8px 30px rgba(2,6,23,0.7);
+      --radius:16px;
+      --maxw:460px;
+      --transition: 280ms cubic-bezier(.2,.9,.3,1);
+      color-scheme: dark;
+    }
+    [data-theme="light"]{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --muted:#5b6b78;
+      --accent:#00c2d8;
+      --glass: rgba(2,6,23,0.03);
+      --shadow: 0 10px 30px rgba(18,22,29,0.06);
+      color-scheme: light;
+    }
+
+    /* Basic reset */
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:var(--bg);
+      color: #edf2f5;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:32px;
+      /* zmiana: usunięte overflow:hidden, aby można było przewijać */
+      background-attachment: fixed;
+    }
+
+    /* Canvas occupies full area behind content */
+    #bgCanvas{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:0;
+      pointer-events:none;
+      mix-blend-mode: normal;
+    }
+
+    .app {
+      position:relative;
+      z-index:2;
+      width: 100%;
+      max-width: var(--maxw);
+      margin:auto;
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      align-items:center;
+      padding:28px;
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px) saturate(120%);
+    }
+
+    /* Header / logo */
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      width:100%;
+    }
+    .logo-wrap{
+      width:80px;
+      height:80px;
+      flex:0 0 80px;
+      border-radius:12px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--card);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35) inset;
+    }
+    .logo-wrap img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+    .brand-info{
+      text-align:left;
+      flex:1 1 auto;
+    }
+    .brand-info h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:1px;
+      font-weight:800;
+      color:var(--accent);
+    }
+    .brand-info p{
+      margin:4px 0 0;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:500;
+    }
+
+    /* Theme toggle */
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      width:100%;
+    }
+    .toggle{
+      cursor:pointer;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      padding:8px 10px;
+      border-radius:10px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition: all var(--transition);
+      color:var(--muted);
+    }
+    .toggle:hover{ transform:translateY(-3px) }
+
+    /* Links column */
+    .links{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:4px;
+    }
+    .link {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      text-decoration:none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 6px 14px rgba(2,6,23,0.45);
+      transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+      color: inherit;
+      font-weight:600;
+      justify-content:space-between;
+      overflow:hidden;
+      position:relative;
+    }
+    .link .left{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .link svg.icon{
+      width:28px;
+      height:28px;
+      flex:0 0 28px;
+      opacity:0.95;
+    }
+    .link .label{
+      font-size:15px;
+      text-align:left;
+      color:inherit;
+    }
+    .link .sub{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:500;
+    }
+
+    /* Accent effect */
+    .link::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg, transparent, rgba(0,194,216,0.06) 30%, rgba(0,194,216,0.08));
+      transform:translateX(-100%);
+      transition: transform 420ms cubic-bezier(.2,.9,.3,1);
+      pointer-events:none;
+    }
+    .link:hover{
+      transform:translateY(-6px);
+      box-shadow: 0 18px 40px rgba(2,6,23,0.6);
+    }
+    .link:hover::after{ transform:translateX(0) }
+
+    /* CTA special style for zapisów */
+    .cta {
+      border: 2px solid var(--accent);
+      background: linear-gradient(180deg, rgba(0,194,216,0.06), rgba(0,194,216,0.03));
+      color:var(--accent);
+    }
+
+    /* Small footer */
+    .foot{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      opacity:0.95;
+    }
+
+    /* Entrance animation for links */
+    .links .link{
+      transform: translateY(12px);
+      opacity:0;
+      animation: dropIn .52s ease forwards;
+    }
+    .links .link:nth-child(1){ animation-delay: 0.06s }
+    .links .link:nth-child(2){ animation-delay: 0.12s }
+    .links .link:nth-child(3){ animation-delay: 0.18s }
+    .links .link:nth-child(4){ animation-delay: 0.24s }
+    .links .link:nth-child(5){ animation-delay: 0.30s }
+    .links .link:nth-child(6){ animation-delay: 0.36s }
+    .links .link:nth-child(7){ animation-delay: 0.42s }
+
+    @keyframes dropIn{
+      to{ transform:none; opacity:1 }
+    }
+
+    /* Responsive tweaks */
+    @media (max-width:520px){
+      body{ padding:18px }
+      .app{ padding:20px }
+      .logo-wrap{ width:64px; height:64px; flex:0 0 64px; border-radius:10px }
+      .brand-info h1{ font-size:16px }
+    }
+
+    /* dodatkowe – dla bardzo małych ekranów */
+    @media (max-width:360px){
+      .link .label{ font-size:14px }
+      .link .sub{ font-size:11px }
+      .brand-info p{ font-size:12px }
+    }
+
+    /* kiedy wysokość ekranu jest mała (np. duża ilość linków) — ustawienie startu zamiast centrowania */
+    @media (max-height:740px){
+      body{ align-items:flex-start; padding-top:22px; padding-bottom:22px }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Canvas background -->
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+<main class="app" role="main" aria-labelledby="title">
+  <div class="brand" role="group" aria-label="Brand">
+    <div class="logo-wrap" aria-hidden="false">
+      <!-- Wstaw tutaj plik logo: grafika.jpg -->
+      <img src="grafika.jpg" alt="Best Hacking League - logo">
+    </div>
+    <div class="brand-info">
+      <h1 id="title">BEST HACKING LEAGUE</h1>
+      <p>Hack. Play. Win.</p>
+    </div>
+    <div class="controls" aria-hidden="false">
+      <button id="themeToggle" class="toggle" aria-pressed="false" title="Przełącz jasny/ciemny motyw">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:13px">Motyw</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Links -->
+  <nav class="links" aria-label="Lista linków">
+    <a class="link" href="https://besthackingleague.pl/" target="_blank" rel="noopener noreferrer" onclick="trackClick('Strona Internetowa')">
+      <div class="left">
+        <!-- globe icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h20M12 2c2.5 3 2.5 10 0 20" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">Strona Internetowa</div>
+         
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a class="link" href="https://www.facebook.com/BESTHACKINGLEAGUE" target="_blank" rel="noopener noreferrer" onclick="trackClick('Facebook')">
+      <div class="left">
+        <!-- facebook icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v8h4v-8h3l1-4h-4V6a1 1 0 011-1h3V2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">Facebook</div>
+          
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a class="link" href="https://www.instagram.com/best_hacking_league/?fbclid=IwY2xjawLfbe5leHRuA2FlbQIxMABicmlkETBJTjUyUE14ZTRZeTlRU0U0AR6ChLEVUvmC1qWlaHXcNmDndEdxgJe84c74i0t1lfnVd4CQ9br9rzbhXSFZCQ_aem_nQw6QTDWa9ift2mmOiywfw#" target="_blank" rel="noopener noreferrer" onclick="trackClick('Instagram')">
+      <div class="left">
+        <!-- instagram icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.4"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" stroke="currentColor" stroke-width="1.2"/><path d="M17.5 6.5h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <div>
+          <div class="label">Instagram</div>
+         
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a class="link" href="https://www.linkedin.com/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fcompany%2Fbest-hacking-league%2Fposts%2F%3FfeedView%3Dall" target="_blank" rel="noopener noreferrer" onclick="trackClick('LinkedIn')">
+      <div class="left">
+        <!-- linkedin icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 8a6 6 0 016 6v6h-4v-6a2 2 0 00-4 0v6h-4v-14h4v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9h4v11H2zM4 3a2 2 0 11-.001 3.999A2 2 0 014 3z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">LinkedIn</div>
+       
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+<a class="link" href="https://discord.com/invite/tpqb8tUNrQ" target="_blank" rel="noopener noreferrer" onclick="trackClick('Discord')">
+  <div class="left">
+    <!-- discord icon -->
+    <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 4a16 16 0 00-4.2-1.3.1.1 0 00-.1.05c-.2.4-.5.9-.6 1.3-1.8-.3-3.6-.3-5.4 0-.1-.4-.4-.9-.6-1.3a.1.1 0 00-.1-.05A16 16 0 004 4c-1.3 2-2.1 4.3-2.4 6.7 1.5 2.1 3.7 3.7 6.1 4.7.5-.7.9-1.5 1.1-2.3-.6-.2-1.2-.5-1.7-.9-.1-.1-.1-.3 0-.4.1-.1.2-.1.3 0a9 9 0 0011.2 0c.1-.1.2-.1.3 0 .1.1.1.3 0 .4-.5.4-1.1.7-1.7.9.2.8.6 1.6 1.1 2.3 2.4-1 4.6-2.6 6.1-4.7C22.1 8.3 21.3 6 20 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="9" cy="12" r="1" fill="currentColor"/>
+      <circle cx="15" cy="12" r="1" fill="currentColor"/>
+    </svg>
+    <div>
+      <div class="label">Discord</div>
+    
+    </div>
+  </div>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</a>
+
+    <a class="link" href="https://www.youtube.com/watch?v=RnIbcJ5es68" target="_blank" rel="noopener noreferrer" onclick="trackClick('10.BHL Aftermovie')">
+      <div class="left">
+        <!-- play / video icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M10 8l6 4-6 4V8z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">10.BHL Aftermovie</div>
+         
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a class="link" href="https://ctrlaltwinxx.github.io/HackTheDino/" target="_blank" rel="noopener noreferrer" onclick="trackClick('Gra terenowa/online')">
+      <div class="left">
+        <!-- map / game icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">Gra terenowa / online</div>
+      
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a class="link cta" href="DO_WYPEŁNIENIA" target="_blank" rel="noopener noreferrer" onclick="trackClick('Link do zapisów')">
+      <div class="left">
+        <!-- signup / form icon -->
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h18M12 3v6m0 6v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="label">Link do zapisów</div>
+          <div class="sub">DO WYPEŁNIENIA</div>
+        </div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+  </nav>
+
+  <div class="foot" role="contentinfo">© <span id="year"></span> Best Hacking League</div>
+</main>
+
+<script>
+/* ==========================
+   Theme handling (light/dark)
+   ========================== */
+(function(){
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const stored = localStorage.getItem('bhl_theme');
+  if(stored) document.documentElement.setAttribute('data-theme', stored);
+
+  btn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', cur);
+    localStorage.setItem('bhl_theme', cur);
+    btn.setAttribute('aria-pressed', cur === 'light');
+  });
+})();
+
+/* ==========================
+   Year auto-fill
+   ========================== */
+document.getElementById('year').textContent = (new Date()).getFullYear();
+
+/* ==========================
+   Click tracking (placeholder)
+   - Replace or extend trackClick to push to your analytics provider
+   ========================== */
+function trackClick(label){
+  try{
+    // basic console log for debugging
+    console.info('[TRACK_CLICK]', label, new Date().toISOString());
+    // Example: if using Google Analytics 4:
+    // gtag('event', 'link_click', { 'link_label': label });
+    // Or if using dataLayer:
+    // window.dataLayer = window.dataLayer || [];
+    // window.dataLayer.push({ event: 'link_click', label: label });
+  } catch(e){
+    console.warn('tracking failed', e);
+  }
+}
+
+/* ==========================
+   Background: animated digital grid
+   Canvas draws moving nodes + connecting lines for "hacker" vibe
+   ========================== */
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(window.devicePixelRatio || 1.0, 2);
+  let w = 0, h = 0, nodes = [];
+
+  function resize(){
+    // ensure canvas always covers viewport size
+    w = Math.max(window.innerWidth, document.documentElement.clientWidth || 0);
+    h = Math.max(window.innerHeight, document.documentElement.clientHeight || 0);
+    canvas.width = Math.floor(w * DPR);
+    canvas.height = Math.floor(h * DPR);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+
+  // create nodes grid + some random jitter
+  function initNodes(){
+    nodes = [];
+    const cols = Math.max(6, Math.floor(w / 120));
+    const rows = Math.max(5, Math.floor(h / 120));
+    const gapX = w / (cols - 1);
+    const gapY = h / (rows - 1);
+
+    for(let y=0;y<rows;y++){
+      for(let x=0;x<cols;x++){
+        nodes.push({
+          ox: x * gapX,
+          oy: y * gapY,
+          x: x * gapX + (Math.random()-0.5) * 20,
+          y: y * gapY + (Math.random()-0.5) * 20,
+          vx: (Math.random()-0.5) * 0.2,
+          vy: (Math.random()-0.5) * 0.2,
+          r: 1 + Math.random() * 2,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+
+    // subtle vignette
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, 'rgba(0,0,0,0.16)');
+    g.addColorStop(1, 'rgba(0,0,0,0.4)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+
+    // background faint noise pattern (diagonal lines)
+    ctx.save();
+    ctx.globalAlpha = 0.03;
+    ctx.strokeStyle = '#00c2d8';
+    ctx.lineWidth = 1;
+    for(let i=-h;i<w;i+=24){
+      ctx.beginPath();
+      ctx.moveTo(i,0);
+      ctx.lineTo(i + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // update nodes and draw connections
+    for(let i=0;i<nodes.length;i++){
+      const n = nodes[i];
+      // simple oscillation
+      n.phase += 0.01 + (i%3)*0.001;
+      n.x = n.ox + Math.sin(n.phase) * 10 + n.vx * 20;
+      n.y = n.oy + Math.cos(n.phase) * 10 + n.vy * 20;
+
+      // draw node
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(0,194,216,' + (0.4 + Math.abs(Math.sin(n.phase))*0.6) + ')';
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fill();
+
+      // connect to nearby nodes
+      for(let j=i+1;j<Math.min(nodes.length, i+12); j++){
+        const m = nodes[j];
+        const dx = n.x - m.x;
+        const dy = n.y - m.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 110){
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(m.x, m.y);
+          ctx.strokeStyle = 'rgba(0,194,216,' + (0.08 + (110-dist)/160) + ')';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // soft center glow
+    const cx = w * 0.5, cy = h * 0.4;
+    const rad = Math.max(w,h) * 0.7;
+    const glow = ctx.createRadialGradient(cx,cy,0, cx,cy, rad);
+    glow.addColorStop(0, 'rgba(0,194,216,0.04)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  // animation loop
+  let raf;
+  function anim(){
+    draw();
+    raf = requestAnimationFrame(anim);
+  }
+
+  // handle resizing in a throttled manner
+  let resizeTO;
+  function handleResize(){
+    clearTimeout(resizeTO);
+    resizeTO = setTimeout(() => {
+      resize();
+      initNodes();
+    }, 80);
+  }
+
+  // init
+  function start(){
+    resize();
+    initNodes();
+    anim();
+    window.addEventListener('resize', handleResize, {passive:true});
+  }
+
+  // Start once fonts/images have chance to load
+  window.addEventListener('load', start);
+})();
+</script>
+</body>
+</html>
